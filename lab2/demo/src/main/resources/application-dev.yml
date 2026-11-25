@@ -1,0 +1,6 @@
+app:
+  greeting: "Salut din mediul de DEVELOPMENT!"
+  datasource:
+    file-path: classpath:data/users-dev.csv
+    format: csv
+    max-records: 3

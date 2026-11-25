@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>VROS - Live Route Optimization</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; padding: 0 15px; background: #f5f7fa; }
+        .card { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        button { background: #2563eb; color: white; border: none; padding: 10px 16px; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #1d4ed8; }
+        input { padding: 8px; margin-right: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        pre { background: #1e293b; color: #38bdf8; padding: 12px; border-radius: 6px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+<h2>VROS — Vehicle Routing & Optimization System (Lab 7)</h2>
+
+<div class="card">
+    <h3>1. Autentificare JWT</h3>
+    <input id="user" value="admin" placeholder="Username">
+    <input id="pass" type="password" value="admin123" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <p id="authStatus">Neautentificat</p>
+</div>
+
+<div class="card">
+    <h3>2. Rulează Optimizare Scenariu</h3>
+    <input id="scenarioId" type="number" value="1" placeholder="Scenario ID">
+    <button onclick="createDemoAndOptimize()">Creează Scenariu Demo & Optimizează</button>
+</div>
+
+<div class="card">
+    <h3>3. Flux Live (Real-Time Updates)</h3>
+    <pre id="liveLog">Conectat la stream-ul live...\n</pre>
+</div>
+
+<script>
+    let token = '';
+    const logEl = document.getElementById('liveLog');
+
+    const evtSource = new EventSource('/api/routes/stream');
+    evtSource.addEventListener('status', e => {
+        logEl.textContent += '[STATUS] ' + e.data + '\n';
+    });
+    evtSource.addEventListener('route_computed', e => {
+        logEl.textContent += '[RUTĂ CALCULATĂ] ' + JSON.stringify(JSON.parse(e.data), null, 2) + '\n';
+    });
+
+    async function login() {
+        const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: document.getElementById('user').value,
+                password: document.getElementById('pass').value
+            })
+        });
+        const data = await res.json();
+        if (data.token) {
+            token = data.token;
+            document.getElementById('authStatus').textContent = 'Autentificat ca: ' + data.username + ' (' + data.role + ')';
+        } else {
+            document.getElementById('authStatus').textContent = 'Eroare autentificare!';
+        }
+    }
+
+    async function createDemoAndOptimize() {
+        if (!token) { alert('Autentifică-te mai întâi!'); return; }
+        const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+
+        // Creăm un scenariu cu vehiculul 2 (Mercedes Sprinter - disponibil) și livrările 1 și 2
+        const scRes = await fetch('/api/scenarios', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ name: 'Scenariu Live ' + Date.now(), vehicleIds: Array.of(2), deliveryIds: [1, 2] })
+
+        });
+        const scenario = await scRes.json();
+        document.getElementById('scenarioId').value = scenario.id;
+
+        await fetch('/api/scenarios/' + scenario.id + '/optimize', { method: 'POST', headers });
+    }
+</script>
+</body>
+</html>

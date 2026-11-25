@@ -1,0 +1,4 @@
+[
+  {"id": 101, "name": "Admin Prod", "role": "SuperAdmin"},
+  {"id": 102, "name": "System Monitor", "role": "Auditor"}
+]

@@ -1,0 +1,6 @@
+app:
+  greeting: "Salut din mediul de PRODUCTION!"
+  datasource:
+    file-path: classpath:data/users-prod.json
+    format: json
+    max-records: 10
